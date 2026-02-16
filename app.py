@@ -4,51 +4,52 @@ import google.generativeai as genai
 # --- CONFIGURACIÓN ---
 st.set_page_config(page_title="Anciano de Bolsillo", page_icon="🛡️")
 
-# Recuperar la clave de los Secrets de Streamlit
+# Estilos básicos
+st.markdown("<style>h1{color:#2E5EAA;}</style>", unsafe_allow_html=True)
+
+# Recuperar la clave
 api_key = st.secrets.get("GEMINI_API_KEY")
 
-if not api_key:
-    st.error("⚠️ No se encontró la API Key en los Secrets de Streamlit.")
-    st.stop()
-
-# Configuración simple
-genai.configure(api_key=api_key)
-
-# Definimos el modelo - Usamos 'gemini-1.5-flash' que es el estándar actual
-model = genai.GenerativeModel(
-    model_name='gemini-1.5-flash',
-    system_instruction=(
-        "Eres un anciano de congregación experimentado en Argentina. "
-        "Das consejos basados en la Traducción del Nuevo Mundo (2013) y jw.org. "
-        "Tu tono es empático, razonable y equilibrado. "
-        "Estructura: 1. Validación, 2. Texto Bíblico, 3. Referencia de la Watchtower, 4. Sugerencia práctica."
-    )
-)
+if api_key:
+    try:
+        genai.configure(api_key=api_key)
+        # Usamos el nombre de modelo más estándar y estable
+        model = genai.GenerativeModel(
+            model_name='gemini-1.5-flash',
+            system_instruction=(
+                "Eres un anciano de congregación experimentado. Respondes como un pastor espiritual "
+                "usando la Biblia Traducción del Nuevo Mundo (2013) y publicaciones de jw.org. "
+                "Tu tono es amoroso, equilibrado y razonable. Siempre validas los sentimientos, "
+                "das un texto bíblico, citas una publicación y das un consejo práctico."
+            )
+        )
+    except Exception as e:
+        st.error(f"Error de configuración: {e}")
 
 st.title("🛡️ Anciano de Bolsillo")
-st.caption("Guía espiritual leal y equilibrada")
+st.caption("Guía espiritual leal basada en la Biblia")
 
-# Historial
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
+# Mostrar historial
 for m in st.session_state.messages:
     with st.chat_message(m["role"]):
         st.markdown(m["content"])
 
 # Entrada de usuario
-if prompt := st.chat_input("¿Qué tienes en tu corazón?"):
+if prompt := st.chat_input("¿Qué tienes en tu corazón, hermano?"):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
         try:
-            # Generación de respuesta
+            # Generación simplificada para evitar errores de versión
             response = model.generate_content(prompt)
-            texto_respuesta = response.text
-            st.markdown(texto_respuesta)
-            st.session_state.messages.append({"role": "assistant", "content": texto_respuesta})
+            if response.text:
+                st.markdown(response.text)
+                st.session_state.messages.append({"role": "assistant", "content": response.text})
         except Exception as e:
-            st.error(f"Error técnico: {e}")
-            st.info("Prueba crear una nueva API Key en Google AI Studio.")
+            st.error(f"Todavía hay un detalle técnico: {e}")
+            st.info("Asegúrate de haber guardado la clave nueva en los Secrets de Streamlit.")
