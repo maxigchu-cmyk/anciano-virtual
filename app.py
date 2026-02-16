@@ -1,43 +1,49 @@
 import streamlit as st
 import google.generativeai as genai
 
-# --- CONFIGURACIÓN ---
+# --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="Anciano de Bolsillo", page_icon="🛡️")
 
+# --- CONEXIÓN CON LA API ---
 if "GEMINI_API_KEY" in st.secrets:
     api_key = st.secrets["GEMINI_API_KEY"]
 else:
     api_key = st.sidebar.text_input("🔑 Gemini API Key:", type="password")
 
-# --- MOTOR DE LA APP ---
+# --- INICIALIZACIÓN DEL MODELO ---
 if api_key:
     try:
         genai.configure(api_key=api_key)
-        # Usamos el nombre técnico completo
+        
+        # Esta configuración usa el modelo más estable disponible
         model = genai.GenerativeModel(
-            model_name='models/gemini-1.5-pro',
+            model_name='gemini-pro',  # Nombre estándar universal
             system_instruction=(
-                "Eres un anciano de congregación experimentado de los Testigos de Jehová. "
-                "Respondes con la Traducción del Nuevo Mundo y publicaciones de la Watchtower. "
-                "Tu tono es empático, razonable y equilibrado. "
-                "Estructura: Validación, Texto Bíblico, Referencia de JW.org y Sugerencia práctica."
+                "Actúa como un anciano de congregación cristiano con décadas de experiencia. "
+                "Tu objetivo es dar consejos basados en la Traducción del Nuevo Mundo (2013) y jw.org. "
+                "Sé empático, razonable y equilibrado. Estructura: Validación, Texto Bíblico, "
+                "Referencia de la Watchtower y Sugerencia práctica."
             )
         )
     except Exception as e:
         st.error(f"Error de configuración: {e}")
 
+# --- INTERFAZ ---
 st.title("🛡️ Anciano de Bolsillo")
+st.caption("Guía espiritual basada en principios bíblicos")
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
+# Mostrar historial
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-if prompt := st.chat_input("¿Qué tienes en tu corazón?"):
+# --- PROCESAR PREGUNTA ---
+if prompt := st.chat_input("¿En qué puedo ayudarte hoy, hermano?"):
     if not api_key:
-        st.warning("Falta la API Key.")
+        st.warning("⚠️ Por favor, ingresa la API Key en la barra lateral o en Secrets.")
         st.stop()
 
     st.session_state.messages.append({"role": "user", "content": prompt})
@@ -46,11 +52,17 @@ if prompt := st.chat_input("¿Qué tienes en tu corazón?"):
 
     with st.chat_message("assistant"):
         try:
-            # Respuesta directa para máxima compatibilidad
+            # MÉTODO DE GENERACIÓN SIMPLE PARA EVITAR ERRORES DE VERSIÓN
             response = model.generate_content(prompt)
-            respuesta_texto = response.text
-            st.markdown(respuesta_texto)
-            st.session_state.messages.append({"role": "assistant", "content": respuesta_texto})
+            
+            if response.text:
+                respuesta = response.text
+                st.markdown(respuesta)
+                st.session_state.messages.append({"role": "assistant", "content": respuesta})
+            else:
+                st.error("La IA no pudo generar una respuesta. Revisa tu saldo o cuota en Google AI Studio.")
+                
         except Exception as e:
-            # Si vuelve a dar 404, intentamos con el nombre alternativo automáticamente
-            st.error(f"Error: {e}. Intenta cambiar el nombre del modelo a 'models/gemini-pro' en GitHub.")
+            # Si 'gemini-pro' falla, el error aparecerá aquí
+            st.error(f"Error técnico: {e}")
+            st.info("Sugerencia: Ve a Google AI Studio y verifica que tu API Key esté activa.")
