@@ -15,7 +15,7 @@ if api_key:
         genai.configure(api_key=api_key)
         # Usamos el nombre técnico completo
         model = genai.GenerativeModel(
-            model_name='models/gemini-1.5-flash',
+            model_name='models/gemini-1.5-pro',
             system_instruction=(
                 "Eres un anciano de congregación experimentado de los Testigos de Jehová. "
                 "Respondes con la Traducción del Nuevo Mundo y publicaciones de la Watchtower. "
