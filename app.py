@@ -32,7 +32,7 @@ if api_key:
             "recomienda hablar con los ancianos locales."
         )
         model = genai.GenerativeModel(
-            model_name='gemini-1.5-flash',
+           model_name='gemini-1.5-flash-latest',
             system_instruction=instrucciones
         )
     except Exception as e:
