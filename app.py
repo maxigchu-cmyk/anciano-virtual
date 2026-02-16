@@ -1,57 +1,39 @@
 import streamlit as st
 import google.generativeai as genai
 
-# --- CONFIGURACIÓN ---
-st.set_page_config(page_title="Anciano de Bolsillo", page_icon="📖")
+st.set_page_config(page_title="Anciano de Bolsillo 3.0", page_icon="📖")
 
 st.title("📖 Anciano de Bolsillo")
-st.caption("Investigación Bíblica Rápida")
+st.caption("Impulsado por Gemini 3 Flash (2026)")
 
-# 1. Conexión
+# 1. Clave API
 api_key = st.secrets.get("GEMINI_API_KEY")
 
 if api_key:
     try:
         genai.configure(api_key=api_key)
-        # Usamos 1.5-flash porque es el que MENOS se cuelga y responde al toque
-        model = genai.GenerativeModel('gemini-2.5-flash')
-    except Exception as e:
-        st.error(f"Error: {e}")
-
-# 2. Historial
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
-
-# 3. Chat con Respuesta Instantánea
-if prompt := st.chat_input("¿Qué quieres investigar?"):
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
-        st.markdown(prompt)
-
-    with st.chat_message("assistant"):
-        # Usamos un mensaje de espera que no bloquee la pantalla
-        mensaje_espera = st.empty()
-        mensaje_espera.markdown("📖 *Consultando la biblioteca...*")
+        # LLAMADA AL MODELO 3.0 FLASH
+        model = genai.GenerativeModel('gemini-3-flash')
         
-        try:
-            # Le pedimos que actúe como investigador de la WOL directamente en el prompt
-            instruccion = (
-                f"Eres un experto en wol.jw.org. Investiga profundamente y responde de forma detallada, "
-                f"citando textos bíblicos y publicaciones específicas (Atalaya, Despertad, etc.) "
-                f"sobre este tema: {prompt}. Al final pon las fuentes."
-            )
-            
-            response = model.generate_content(instruccion)
-            
-            mensaje_espera.empty() # Quitamos el "Consultando..."
-            st.markdown(response.text)
-            st.session_state.messages.append({"role": "assistant", "content": response.text})
-            
-        except Exception as e:
-            mensaje_espera.empty()
-            st.error(f"Se cortó la conexión: {e}")
-            st.info("Probá recargar la página (F5).")
+        if "messages" not in st.session_state:
+            st.session_state.messages = []
+
+        for msg in st.session_state.messages:
+            with st.chat_message(msg["role"]): st.markdown(msg["content"])
+
+        if prompt := st.chat_input("¿En qué puedo ayudarte hoy?"):
+            st.session_state.messages.append({"role": "user", "content": prompt})
+            with st.chat_message("user"): st.markdown(prompt)
+
+            with st.chat_message("assistant"):
+                # Instrucción directa en el envío para evitar latencia
+                full_prompt = (
+                    "Actúa como un anciano de congregación experimentado, empatico y amoroso. Ayuda, aconseja con amor. Usa la Biblia TNM de estudio y "
+                    f"publicaciones de jw.org y Biblioteca en Linea para responder detalladamente a esto: {prompt}"
+                )
+                response = model.generate_content(full_prompt)
+                st.markdown(response.text)
+                st.session_state.messages.append({"role": "assistant", "content": response.text})
+
+    except Exception as e:
+        st.error(f"Error de conexión con 3.0 Flash: {e}")
