@@ -6,7 +6,7 @@ st.set_page_config(page_title="Anciano de Bolsillo 3.0", page_icon="📖")
 
 # Título e Identidad
 st.title("📖 Anciano de Bolsillo")
-st.caption("Investigación Bíblica Avanzada • Gemini 3.0 Flash")
+st.caption("Investigación Bíblica Avanzada")
 
 # --- CONEXIÓN ---
 api_key = st.secrets.get("GEMINI_API_KEY")
@@ -16,7 +16,7 @@ if api_key:
         genai.configure(api_key=api_key)
         
         # DEFINICIÓN DEL MODELO 3.0
-        model = genai.GenerativeModel('gemini-3-flash')
+        model = genai.GenerativeModel('gemini-2.5-flash')
         
         # LA INSTRUCCIÓN MAESTRA (Master Prompt)
         # Aquí definimos el comportamiento profundo del asistente
