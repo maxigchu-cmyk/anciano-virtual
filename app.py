@@ -1,54 +1,54 @@
 import streamlit as st
 import google.generativeai as genai
 
+# --- CONFIGURACIÓN ---
 st.set_page_config(page_title="Anciano de Bolsillo", page_icon="🛡️")
 
-# --- RECUPERAR API KEY ---
-api_key = st.secrets.get("GEMINI_API_KEY") or st.sidebar.text_input("🔑 API Key:", type="password")
+# Recuperar la clave de los Secrets de Streamlit
+api_key = st.secrets.get("GEMINI_API_KEY")
 
-if api_key:
-    genai.configure(api_key=api_key)
-    
-    # Probamos varios nombres de modelos comunes por si uno falla
-    model_names = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro']
-    model = None
-    
-    for name in model_names:
-        try:
-            test_model = genai.GenerativeModel(model_name=name)
-            # Intento de saludo rápido para verificar si el modelo responde
-            test_model.generate_content("Hola", generation_config={"max_output_tokens": 1})
-            model = genai.GenerativeModel(
-                model_name=name,
-                system_instruction="Eres un anciano de congregación experimentado. Respondes con la Biblia TNM y publicaciones JW. Eres empático y equilibrado."
-            )
-            break 
-        except:
-            continue
+if not api_key:
+    st.error("⚠️ No se encontró la API Key en los Secrets de Streamlit.")
+    st.stop()
 
-    if not model:
-        st.error("No se pudo conectar con ningún modelo de Gemini. Revisa si tu API Key tiene permisos en Google AI Studio.")
+# Configuración simple
+genai.configure(api_key=api_key)
 
-# --- INTERFAZ ---
+# Definimos el modelo - Usamos 'gemini-1.5-flash' que es el estándar actual
+model = genai.GenerativeModel(
+    model_name='gemini-1.5-flash',
+    system_instruction=(
+        "Eres un anciano de congregación experimentado en Argentina. "
+        "Das consejos basados en la Traducción del Nuevo Mundo (2013) y jw.org. "
+        "Tu tono es empático, razonable y equilibrado. "
+        "Estructura: 1. Validación, 2. Texto Bíblico, 3. Referencia de la Watchtower, 4. Sugerencia práctica."
+    )
+)
+
 st.title("🛡️ Anciano de Bolsillo")
+st.caption("Guía espiritual leal y equilibrada")
 
+# Historial
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
 for m in st.session_state.messages:
-    with st.chat_message(m["role"]): st.markdown(m["content"])
+    with st.chat_message(m["role"]):
+        st.markdown(m["content"])
 
+# Entrada de usuario
 if prompt := st.chat_input("¿Qué tienes en tu corazón?"):
     st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"): st.markdown(prompt)
+    with st.chat_message("user"):
+        st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        if model:
-            try:
-                response = model.generate_content(prompt)
-                st.markdown(response.text)
-                st.session_state.messages.append({"role": "assistant", "content": response.text})
-            except Exception as e:
-                st.error(f"Error al generar respuesta: {e}")
-        else:
-            st.warning("El motor de IA no está listo.")
+        try:
+            # Generación de respuesta
+            response = model.generate_content(prompt)
+            texto_respuesta = response.text
+            st.markdown(texto_respuesta)
+            st.session_state.messages.append({"role": "assistant", "content": texto_respuesta})
+        except Exception as e:
+            st.error(f"Error técnico: {e}")
+            st.info("Prueba crear una nueva API Key en Google AI Studio.")
