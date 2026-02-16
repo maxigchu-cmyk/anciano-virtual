@@ -20,11 +20,15 @@ else:
 
 if api_key:
     genai.configure(api_key=api_key)
-    # Usamos Gemini 1.5 Flash (Rápido y eficiente)
-    model = genai.GenerativeModel('gemini-1.5-flash',
-                                  system_instruction="""
-Actúa como un anciano de congregación cristiano con décadas de experiencia, razonable, empático y firme cuando es necesario.
-Usa la Traducción del Nuevo Mundo (2013+) y publicaciones de la Watchtower (JW.org).
+    # Cambiamos a 'gemini-1.5-flash-latest' que es la ruta más compatible
+    model = genai.GenerativeModel(
+        model_name='gemini-1.5-flash', # Si falla, intenta 'models/gemini-1.5-flash'
+        system_instruction="""
+Actúa como un anciano de congregación cristiano experimentado. 
+Usa la Traducción del Nuevo Mundo (2013+) y publicaciones de la Watchtower.
+Responde con empatía, base bíblica y sugerencias prácticas.
+"""
+    )
 
 ESTRUCTURA DE RESPUESTA:
 1. Validación empática.
