@@ -81,7 +81,7 @@ if prompt := st.chat_input("¿Qué te inquieta hoy, hermano?"):
 
     with st.chat_message("assistant", avatar="📖"):
         stream = client.chat.completions.create(
-            model="gpt-4o", # Modelo rápido y eficiente
+            model="gpt-3.5-turbo", # Modelo rápido y eficiente
             messages=[{"role": "system", "content": SYSTEM_PROMPT}] + st.session_state.messages,
             stream=True,
         )
