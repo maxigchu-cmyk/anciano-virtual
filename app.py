@@ -1,69 +1,71 @@
 import streamlit as st
 import google.generativeai as genai
 
-# --- CONFIGURACIÓN DE PÁGINA ---
-st.set_page_config(page_title="Anciano de Bolsillo - Investigador", page_icon="🛡️")
+# --- 1. CONFIGURACIÓN DE LA PÁGINA ---
+st.set_page_config(
+    page_title="Anciano de Bolsillo", 
+    page_icon="📖", 
+    layout="centered"
+)
 
-st.title("🛡️ Investigador de la Biblioteca")
-st.caption("Conectado a la Biblioteca en Línea Watchtower")
+# Estilo personalizado para mejorar la lectura
+st.markdown("""
+    <style>
+    .stChatMessage { border-radius: 15px; margin-bottom: 10px; }
+    h1 { color: #4A90E2; }
+    </style>
+    """, unsafe_allow_html=True)
 
-# 1. Recuperar API Key
+st.title("📖 Anciano de Bolsillo")
+st.subheader("Investigador de la Biblioteca en Línea")
+st.info("Este asistente busca en wol.jw.org para darte respuestas bíblicas precisas.")
+
+# --- 2. CONEXIÓN CON GEMINI ---
 api_key = st.secrets.get("GEMINI_API_KEY")
 
 if not api_key:
-    st.error("No se encontró la clave GEMINI_API_KEY en los Secrets.")
+    st.error("🔑 Error: No se encontró la API Key en los Secrets de Streamlit.")
     st.stop()
 
-# 2. Configurar el Modelo con Búsqueda en Google (Grounding)
 try:
     genai.configure(api_key=api_key)
     
-    # Usamos las herramientas de búsqueda para que pueda "navegar" por la WOL
-    # Nota: Si gemini-2.5-flash te funcionó, lo mantenemos. Si no, usa 'gemini-1.5-flash'
+    # Configuramos el modelo con búsqueda en tiempo real (Google Search Grounding)
+    # Esto le permite navegar por la Biblioteca en Línea
     model = genai.GenerativeModel(
-        model_name='gemini-2.5-flash', 
-        tools=[{"google_search_retrieval": {}}] # ESTO ACTIVA LA BÚSQUEDA REAL
+        model_name='gemini-2.5-flash',
+        tools=[{"google_search_retrieval": {}}] 
     )
     
-    # Instrucciones estrictas para la "personalidad" de búsqueda
+    # Instrucciones de comportamiento
     instrucciones_sistema = (
-        "Eres un experto en investigación de la BIBLIOTECA EN LÍNEA Watchtower (wol.jw.org). "
-        "Tu misión es ayudar a un hermano a encontrar información exacta. "
-        "Sigue siempre estos pasos:\n"
-        "1. BUSCA: Usa la herramienta de búsqueda para encontrar artículos en wol.jw.org o jw.org.\n"
-        "2. INFORMACIÓN COMPLETA: Extrae la información más relevante sobre el tema.\n"
-        "3. RESUMEN: Haz un resumen claro y fácil de entender.\n"
-        "4. FUENTES: Al final de tu respuesta, haz una lista con las fuentes usadas "
-        "(Título de la publicación, fecha, párrafo o revista).\n"
-        "5. TONO: Sé siempre humilde, espiritual y animador."
+        "Eres un anciano de congregación experto en investigación bíblica. "
+        "Tu única fuente de autoridad es la Biblia (TNM 2013) y las publicaciones de los Testigos de Jehová. "
+        "Cuando el usuario pregunte algo, DEBES buscar en wol.jw.org y jw.org.\n\n"
+        "FORMA DE RESPONDER:\n"
+        "1. Resumen detallado: Explica el tema de forma clara y amorosa.\n"
+        "2. Textos bíblicos: Incluye siempre los textos clave citados en las publicaciones.\n"
+        "3. Referencias exactas: Al final, haz una lista de FUENTES (ej: La Atalaya, Despertad, Libro 'Pastoreen', etc.).\n"
+        "4. Tono: Siempre equilibrado, razonable y empático."
     )
 
 except Exception as e:
-    st.error(f"Error de configuración: {e}")
+    st.error(f"❌ Error al conectar con el cerebro de la IA: {e}")
 
-# 3. Chat
+# --- 3. MANEJO DEL CHAT ---
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
+# Mostrar historial de mensajes
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-if prompt := st.chat_input("¿Qué tema te gustaría investigar hoy?"):
+# --- 4. ENTRADA DE PREGUNTAS ---
+if prompt := st.chat_input("¿Qué tema quieres investigar hoy?"):
+    # Guardar mensaje del usuario
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    with st.chat_message("assistant"):
-        try:
-            # Enviamos el prompt junto con las instrucciones de búsqueda
-            query_completa = f"{instrucciones_sistema}\n\nConsulta del usuario: {prompt}"
-            
-            # La IA decidirá si necesita buscar en internet para responder
-            response = model.generate_content(query_completa)
-            
-            st.markdown(response.text)
-            st.session_state.messages.append({"role": "assistant", "content": response.text})
-            
-        except Exception as e:
-            st.error(f"Hubo un error en la búsqueda: {e}")
+    #
